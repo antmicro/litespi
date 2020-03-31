@@ -3,6 +3,7 @@ from migen.genlib.fsm import FSM, NextState
 
 from litespi.clkgen import LiteSPIClkGen
 from litespi.common import *
+from litespi.opcodes import *
 
 from litex.soc.interconnect import stream
 
@@ -15,11 +16,48 @@ addr_oe_mask = {
     4: 0b1111,
 }
 
-def GetConfig(flash=None):
+def GetConfig(flash=None, num_lines=1, mode=1, addr_width=1):
+    # Set default values
+    addr_bits = 24
+    dummy_bits = 8
+    cmd_width = 1
+    data_width = mode
+    command = SpiNorFlashOpCodes.READ
+
     if flash is None:
-        # TODO: replace with a named tuple/configuration object
-        # addr_bits, dummy_bits, cmd_width, addr_width, data_width, command
-        return (24, 8, 1, 1, 1, 0x0b)
+        raise ValueError("flash object cannot be None. Please define it using modules.py")
+    else:
+        # Check if given mode can be used with given pads
+        if mode > num_lines:
+            raise ValueError("Not enough pads (%d) to use access mode (%d)!" % (num_lines, mode))
+        # Check if chip supports given mode
+        if mode not in flash.access_modes.keys():
+            raise ValueError("Access mode (%d) not supported in chip %s!" % (mode, flash.name))
+        # Check if given addr_width is supported
+        if addr_width not in flash.addr_widths.keys():
+            raise ValueError("Address width (%d) not supported in chip %s!" % (addr_width, flash.name))
+
+        # Find out what read command we can use
+        addr32 = ''
+        cmd_picker = ''
+        fast = ''
+        if flash.addr32_support:
+            addr32 = '_4B'
+            addr_bits = 32
+        if flash.fast_read_support:
+            fast = '_FAST'
+            dummy_bits = flash.dummy_bits
+        else:
+            dummy_bits = 0
+        if mode == 1:
+            cmd_picker = ("SpiNorFlashOpCodes.READ%s%s" %
+                          (fast, addr32))
+        else:
+            cmd_picker = ("SpiNorFlashOpCodes.READ_%d_%d_%d%s" %
+                          (cmd_width, addr_width, mode, addr32))
+        command = eval(cmd_picker)
+
+        return (addr_bits, dummy_bits, cmd_width, addr_width, data_width, command.code)
 
 class LiteSPIPHY(Module):
     """Generic LiteSPI PHY
@@ -71,7 +109,7 @@ class LiteSPIPHY(Module):
 
         return res
 
-    def __init__(self, pads, flash=None, device="xc7"):
+    def __init__(self, pads, flash=None, mode=1, address_width=1, device="xc7"):
         self.source = source = stream.Endpoint(spi_phy_data_layout)
         self.sink   = sink   = stream.Endpoint(spi_phy_ctl_layout)
 
@@ -79,7 +117,7 @@ class LiteSPIPHY(Module):
 
         self.submodules.clkgen = clkgen = LiteSPIClkGen(pads, device)
 
-        addr_bits, dummy_bits, cmd_width, addr_width, data_width, command = GetConfig(flash)
+        addr_bits, dummy_bits, cmd_width, addr_width, data_width, command = GetConfig(flash, len(pads), mode, address_width)
 
         data_bits = 32
         cmd_bits = 8
