@@ -117,7 +117,15 @@ class LiteSPIPHY(Module):
 
         self.submodules.clkgen = clkgen = LiteSPIClkGen(pads, device)
 
-        addr_bits, dummy_bits, cmd_width, addr_width, data_width, command = GetConfig(flash, len(pads), mode, address_width)
+        if hasattr(pads, "miso"):
+            bus_width = 1
+            pads.dq = [pads.mosi, pads.miso]
+        else:
+            bus_width = len(pads.dq)
+
+        assert bus_width in [1, 2, 4]
+
+        addr_bits, dummy_bits, cmd_width, addr_width, data_width, command = GetConfig(flash, bus_width, mode, address_width)
 
         data_bits = 32
         cmd_bits = 8
@@ -127,14 +135,6 @@ class LiteSPIPHY(Module):
             pads.cs_n.eq(self.cs_n),
             pads.clk.eq(clkgen.clk),
         ]
-
-        if hasattr(pads, "miso"):
-            bus_width = 1
-            pads.dq = [pads.mosi, pads.miso]
-        else:
-            bus_width = len(pads.dq)
-
-        assert bus_width in [1, 2, 4]
 
         dq_o  = Signal(len(pads.dq))
         dq_i  = Signal(len(pads.dq))
