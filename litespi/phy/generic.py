@@ -179,6 +179,7 @@ class LiteSPIPHY(Module):
             self.shift_out(addr_width, addr_bits, "DUMMY", negedge_op=[NextValue(addr, addr<<addr_width)]),
         )
         fsm.act("DUMMY",
+            dq_oe.eq(0) if addr_width == 1 else If(self.fsm_cnt < 8, dq_oe.eq(addr_oe_mask[addr_width])).Else(dq_oe.eq(0)), # support for mode bits in IO reads
             self.shift_out(addr_width, dummy_bits, "IDLE"),
         )
         fsm.act("DATA",
