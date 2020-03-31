@@ -16,7 +16,7 @@ addr_oe_mask = {
     4: 0b1111,
 }
 
-def GetConfig(flash=None, num_lines=1, mode=1, addr_width=1):
+def GetConfig(flash=None, bus_width=1, mode=1, addr_width=1):
     # Set default values
     addr_bits = 24
     dummy_bits = 8
@@ -28,8 +28,8 @@ def GetConfig(flash=None, num_lines=1, mode=1, addr_width=1):
         raise ValueError("flash object cannot be None. Please define it using modules.py")
     else:
         # Check if given mode can be used with given pads
-        if mode > num_lines:
-            raise ValueError("Not enough pads (%d) to use access mode (%d)!" % (num_lines, mode))
+        if mode > bus_width:
+            raise ValueError("Not enough bus lines (%d) to use access mode (%d)!" % (bus_width, mode))
         # Check if chip supports given mode
         if mode not in flash.access_modes.keys():
             raise ValueError("Access mode (%d) not supported in chip %s!" % (mode, flash.name))
