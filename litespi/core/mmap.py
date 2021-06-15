@@ -39,7 +39,7 @@ class LiteSPIMMAP(Module):
     cs : Signal(), out
         CS signal for the flash chip, should be connected to cs signal of the PHY.
     """
-    def __init__(self, endianness="big"):
+    def __init__(self, endianness="big", cs_delay=10000):
         self.source = source = stream.Endpoint(spi_phy_ctl_layout)
         self.sink   = sink   = stream.Endpoint(spi_phy_data_layout)
         self.bus    = bus    = wishbone.Interface()
