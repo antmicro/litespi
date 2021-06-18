@@ -4403,6 +4403,27 @@ class MX25L12805D(SpiNorFlashModule):
     ]
     dummy_bits = 8
 
+class MX25L12833F(SpiNorFlashModule):
+
+    manufacturer_id = SpiNorFlashManufacturerIDs.MACRONIX
+    device_id = 0x2018
+    name = "mx25l12833f"
+
+    total_size  =   16777216   # bytes
+    page_size   =        256   # bytes
+    total_pages =      65536
+
+    supported_opcodes = [
+        SpiNorFlashOpCodes.READ_1_1_1,
+        SpiNorFlashOpCodes.PP_1_1_1,
+        SpiNorFlashOpCodes.READ_1_1_1_FAST,
+        SpiNorFlashOpCodes.READ_1_1_2,
+        SpiNorFlashOpCodes.READ_1_2_2,
+        SpiNorFlashOpCodes.READ_1_1_4,
+        SpiNorFlashOpCodes.PP_1_4_4
+    ]
+    dummy_bits = 8
+
 
 class MX25L12835F(SpiNorFlashModule):
 
